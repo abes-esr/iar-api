@@ -1,0 +1,29 @@
+# Dépendances principales de l'API RAMEAU (FastAPI / IA)
+
+# Web Framework & Server
+fastapi>=0.100.0
+uvicorn>=0.22.0
+python-multipart>=0.0.6
+
+# Machine Learning & Search Vectorielle
+sentence-transformers>=2.2.2
+qdrant-client>=1.3.0
+faiss-cpu>=1.7.4
+numpy>=1.24.0
+scikit-learn>=1.2.0
+omikuji>=0.4.0
+
+# Traitement du langage naturel & LLM
+openai>=1.0.0
+langdetect>=1.0.9
+simplemma>=0.4.0
+nltk>=3.8.0
+texthero==1.0.5
+
+
+# Manipulation de données
+pandas>=2.0.0
+
+# Utilitaires & Configuration
+python-dotenv>=1.0.0
+requests>=2.31.0
