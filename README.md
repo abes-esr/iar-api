@@ -12,7 +12,8 @@ Ce composant backend constitue le cœur du projet **RAMEAU** de l'ABES (Agence B
 - [Ajustements Sécurité & Corrections Appliquées](#-ajustements-sécurité--corrections-appliquées)
 - [Spécification de l'API](#-spécification-de-lapi)
 - [Installation & Déploiement](#-installation--déploiement)
-- [Structure des Fichiers & Dépendances](#-structure-des-fichiers--dépendances)
+- [Structure du Projet & Modules `src/`](#-structure-du-projet--modules-src)
+- [Tests & Évaluation](#-tests--évaluation)
 
 ---
 
@@ -149,3 +150,35 @@ L'interface de documentation interactive (Swagger UI) sera disponible sur : `htt
 - **`src/embed_lib.py`** : Module de recherche vectorielle. Fournit la chaîne de nettoyage linguistique native (`unicodedata`, `re`, `simplemma`, `nltk`) et les fonctions d'embedding `embedding_faiss` et `embedding_qdrant`.
 - **`src/omk.py`** : Module de prédiction multi-label extrême. Intègre la classification `Omikuji` couplée au vectoriseur TF-IDF et décodage de vedettes RAMEAU.
 
+---
+
+## 🧪 Tests & Évaluation
+
+Le dossier test/ contient les outils d'évaluation de la performance du modèle et de non-régression de l'API.
+
+### 1. Test d'intégration vectorielle (`test_qdrant_integration.py`)
+
+Ce script valide l'intégration de bout en bout de l'API de recherche vectorielle sémantique en se connectant à une instance Qdrant locale. Il utilise le modèle d'embedding par défaut et interroge la collection configurée pour retourner des propositions RAMEAU.
+
+**Exécution :**
+
+```bash
+python test/test_qdrant_integration.py
+```
+
+### 2. Évaluation de la Justesse sémantique (`test_classification.ipynb` & `test_classification_v2.ipynb`)
+
+Ces notebooks Jupyter contiennent le pipeline complet pour évaluer la justesse algorithmique des prédictions RAMEAU. Ils calculent l'exactitude des prédictions (ex: Top-k accuracy) en utilisant des datasets de test dédiés afin de garantir la non-régression de la qualité métier lors des changements de configuration.
+
+**Exécution :**
+Ouvrir les notebooks via Jupyter Lab/Notebook ou VS Code et lancer l'exécution séquentielle des cellules :
+
+```bash
+# Lancement de Jupyter
+jupyter notebook test/test_classification.ipynb
+```
+
+### 3. Données de Test (`test/data/`)
+
+- [test_data.csv](file:///c:/Projets/iar/iar-api/test/data/test_data.csv) : Liste des identifiants (PPN) de notices réservés exclusivement à l'évaluation (pour éviter le biais d'entraînement).
+- [test_rameau_export.csv](file:///c:/Projets/iar/iar-api/test/data/test_rameau_export.csv) : Corpus réduit de notices de test (PPN, Titres, vedettes RAMEAU attendues) servant de benchmark pour évaluer la justesse des prédictions.
