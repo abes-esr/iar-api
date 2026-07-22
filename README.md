@@ -166,17 +166,23 @@ Ce script valide l'intégration de bout en bout de l'API de recherche vectoriell
 python test/test_qdrant_integration.py
 ```
 
-### 2. Évaluation de la Justesse sémantique (`test_classification.ipynb` & `test_classification_v2.ipynb`)
+### 2. Évaluation de la Justesse sémantique (`test_classification.py` / `.ipynb` & `test_classification_v2.py` / `.ipynb`)
 
-Ces notebooks Jupyter contiennent le pipeline complet pour évaluer la justesse algorithmique des prédictions RAMEAU. Ils calculent l'exactitude des prédictions (ex: Top-k accuracy) en utilisant des datasets de test dédiés afin de garantir la non-régression de la qualité métier lors des changements de configuration.
+Ces scripts et notebooks Jupyter contiennent le pipeline complet pour évaluer la justesse algorithmique des prédictions RAMEAU. Ils calculent l'exactitude des prédictions (ex: Top-k accuracy) en utilisant des datasets de test dédiés afin de garantir la non-régression de la qualité métier lors des changements de configuration.
 
-**Exécution :**
+**Exécution (sans Jupyter) :**
+Vous pouvez lancer directement les scripts convertis en Python standard :
+```bash
+python test/test_classification.py
+```
+
+**Exécution (avec Jupyter) :**
 Ouvrir les notebooks via Jupyter Lab/Notebook ou VS Code et lancer l'exécution séquentielle des cellules :
-
 ```bash
 # Lancement de Jupyter
 jupyter notebook test/test_classification.ipynb
 ```
+
 
 ### 3. Données de Test (`test/data/`)
 
