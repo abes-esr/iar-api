@@ -154,7 +154,7 @@ L'interface de documentation interactive (Swagger UI) sera disponible sur : `htt
 
 ## 🧪 Tests & Évaluation
 
-Le dossier test/ contient les outils d'évaluation de la performance du modèle et de non-régression de l'API.
+Le dossier [test/](test/) contient les outils d'évaluation de la performance du modèle et de non-régression de l'API.
 
 ### 1. Test d'intégration vectorielle (`test_qdrant_integration.py`)
 
@@ -180,5 +180,5 @@ jupyter notebook test/test_classification.ipynb
 
 ### 3. Données de Test (`test/data/`)
 
-- [test_data.csv](file:///c:/Projets/iar/iar-api/test/data/test_data.csv) : Liste des identifiants (PPN) de notices réservés exclusivement à l'évaluation (pour éviter le biais d'entraînement).
-- [test_rameau_export.csv](file:///c:/Projets/iar/iar-api/test/data/test_rameau_export.csv) : Corpus réduit de notices de test (PPN, Titres, vedettes RAMEAU attendues) servant de benchmark pour évaluer la justesse des prédictions.
+- [test_data.csv](test/data/test_data.csv) : Liste des identifiants (PPN) de notices réservés exclusivement à l'évaluation (pour éviter le biais d'entraînement).
+- [test_rameau_export.csv](test/data/test_rameau_export.csv) : Corpus réduit de notices de test (PPN, Titres, vedettes RAMEAU attendues) servant de benchmark pour évaluer la justesse des prédictions.
