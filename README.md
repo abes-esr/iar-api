@@ -83,11 +83,7 @@ Le serveur reçoit les requêtes en provenance d'IHM de catalogage (ex: **WinIBW
 ### Stratégies d'Agrégation (`aggregationType`)
 
 - `union` : Union simple des résultats de tous les modèles interrogés.
-- `intersection` : Conservation uniquement des sujets suggérés par _tous_ les modèles.
-- `intersection2models` : Conservation des sujets suggérés par _au moins 2 modèles_.
-- `llm` : Le modèle LLM (_Llama 3.1_) reçoit le résumé et la liste des propositions, puis élimine les mots-clés non pertinents.
 - `cross` : Re-classement des propositions (_Reranking_) grâce à un Cross-Encoder.
-- `embbed` : Re-classement des propositions via mesure de similarité cosinus.
 
 ---
 
@@ -103,11 +99,10 @@ Le serveur reçoit les requêtes en provenance d'IHM de catalogage (ex: **WinIBW
 | `Summary`          | `str` | `""`       | Résumé ou extrait du document (servant de contexte à l'IA).                                     |
 | `docId`            | `str` | `""`       | Identifiant PPN du document à indexer.                                                          |
 | `models`           | `str` | `None`     | Modèles à utiliser séparés par des virgules (ex: `victor1_concept,victor3_chain` ou `*`).       |
-| `aggregationType`  | `str` | `None`     | Méthode d'agrégation (ex: `intersection2models,llm`, `cross`, etc.).                            |
-| `vocabulary`       | `str` | `'rameau'` | Vocabulaire d'autorité visé.                                                                    |
+| `aggregationType`  | `str` | `None`     | Méthode d'agrégation (ex: `cross`, `union`).                                                     |
 | `subjectsMaxCount` | `int` | `5`        | Nombre maximal de sujets retournés par modèle.                                                  |
 | `Agent`            | `str` | _Requis_   | Numéro RCR / Identifiant de l'établissement demandeur.                                          |
-| `Format`           | `str` | `'json'`   | Format de réponse : `json`, `text`, `text_flat`, `text_tree`, `html`, `html_flat`, `html_tree`. |
+| `Format`           | `str` | `'json'`   | Format de réponse : `json`, `text`.                                                            |
 
 ---
 
@@ -116,8 +111,8 @@ Le serveur reçoit les requêtes en provenance d'IHM de catalogage (ex: **WinIBW
 ### 1. Prérequis
 
 - Python 3.10+
-- Une instance **Qdrant** en local (Port `6333`) ou l'accès aux index FAISS (`.faiss`).
-- Accès à un serveur LLM compatible OpenAI API (ex: **Ollama**, **vLLM** ou vLLM ABES).
+- Une instance **Qdrant** en local (Port `6333`).
+- Accès à un serveur LLM compatible OpenAI API (ex: **Ollama**, **vLLM** ou vLLM ABES) si utilisation d'agrégations LLM.
 
 ### 2. Installation via `requirements.txt`
 

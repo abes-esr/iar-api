@@ -8,11 +8,10 @@ et de post-traitement des vedettes-matières RAMEAU pour les index FAISS et Qdra
 
 import re
 import unicodedata
-from typing import List, Tuple, Dict, Any, Union
+from typing import List, Tuple, Dict, Any
 import pandas as pd
 import simplemma
 import nltk
-import faiss
 
 # Expression régulière pour identifier un PPN Sudoc (8 chiffres suivis de 1 chiffre ou X)
 PPN_REGEX = re.compile(r"^[0-9]{8}([0-9]|X)$")
@@ -145,95 +144,8 @@ def predict_qdrant(
     return load_items
 
 
-def predict_faiss(
-    faiss_index: Any,
-    encoder: Any,
-    text: str,
-    collection_labels: Union[List[str], Dict[int, str]],
-    subjects_max_count: int = 5,
-) -> List[Dict[str, Any]]:
-    """
-    Effectue une recherche vectorielle de prédiction dans un index FAISS.
-
-    Normalise le vecteur en L2 puis effectue une recherche de k plus proches voisins.
-
-    Args:
-        faiss_index: L'index FAISS chargé en mémoire.
-        encoder: Le modèle SentenceTransformer pour l'encodage du texte.
-        text (str): Le texte d'entrée à vectoriser.
-        collection_labels: Liste ou dictionnaire associant l'index au libellé.
-        subjects_max_count (int): Nombre de voisins à rechercher (k).
-
-    Returns:
-        List[Dict[str, Any]]: Liste de dictionnaires au format [{'score': float, 'label': str}].
-    """
-    query_vector = encoder.encode([text], convert_to_numpy=True).astype("float32")
-    faiss.normalize_L2(query_vector)
-
-    k = max(subjects_max_count, 1)
-    scores, ids = faiss_index.search(query_vector, k)
-
-    load_items = []
-    for idx, score in zip(ids[0], scores[0]):
-        if idx != -1 and idx in collection_labels:
-            load_items.append({"score": float(score), "label": collection_labels[idx]})
-
-    return load_items
 
 
-def embedding_faiss(
-    titre: str,
-    resume: str,
-    faiss_index: Any,
-    encoder: Any,
-    collection_labels: Union[List[str], Dict[int, str]],
-    subjects_max_count: int = 5,
-) -> pd.DataFrame:
-    """
-    Génère les propositions de vedettes RAMEAU via un index FAISS.
-
-    Prétraite le texte, exécute la prédiction FAISS, extrait et nettoie les labels
-    et retourne un DataFrame structuré.
-
-    Args:
-        titre (str): Titre du document.
-        resume (str): Résumé du document.
-        faiss_index: Index FAISS.
-        encoder: Modèle d'embedding.
-        collection_labels: Mappage index -> label.
-        subjects_max_count (int): Limite du nombre de résultats.
-
-    Returns:
-        pd.DataFrame: DataFrame avec les colonnes ['label', 'id', 'score'].
-    """
-    descr_series = clean_and_lemmatize(titre, resume)
-    cleaned_text = str(descr_series.iloc[0])
-
-    predictions = predict_faiss(
-        faiss_index, encoder, cleaned_text, collection_labels, subjects_max_count
-    )
-
-    if not predictions:
-        return pd.DataFrame(columns=["label", "id", "score"])
-
-    df_res = pd.DataFrame(predictions)
-
-    # Nettoyage des caractères d'échappement spécifiques RAMEAU
-    df_res["label"] = (
-        df_res["label"]
-        .astype(str)
-        .str.replace("#u#", "_", regex=False)
-        .str.replace("#d#", '"', regex=False)
-        .str.replace("#c#", "'", regex=False)
-        .str.replace("_", " ", regex=False)
-    )
-
-    # Séparation sécurisée des libellés et des PPN
-    processed_tuples = df_res["label"].apply(process_label)
-    df_res["label"] = [t[0] for t in processed_tuples]
-    df_res["id"] = [t[1] for t in processed_tuples]
-
-    return df_res[["label", "id", "score"]]
 
 
 def embedding_qdrant(
