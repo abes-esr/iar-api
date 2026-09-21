@@ -1,105 +1,77 @@
-"""
-Module de prédiction Omikuji RAMEAU.
-
-Ce module permet de prédire des vedettes-matières RAMEAU grâce à la bibliothèque
-de classification extrême multi-label Omikuji et une vectorisation TF-IDF.
-"""
-
-from typing import Any
 import pandas as pd
+import simplemma
+import nltk
+from texthero import preprocessing as preprocessing2
+import texthero as hero
 import omikuji
 
-from .embed_lib import clean_and_lemmatize
 
 
-def predict_sentence(
-    sentence: str,
-    model: Any,
-    vectorizer: Any,
-    le: Any,
-    densify_threshold: float = 0.05,
-) -> pd.DataFrame:
-    """
-    Prédit les étiquettes et scores RAMEAU pour une phrase donnée via Omikuji.
+def clean_and_lemmatize(titre, resume):
+    
+    clean_pipeline = [preprocessing2.fillna,
+                      preprocessing2.lowercase,
+                      preprocessing2.remove_whitespace,
+                      preprocessing2.remove_diacritics]
 
-    Transforme la phrase en vecteur TF-IDF, applique le modèle Omikuji
-    et décode les étiquettes prédites avec le LabelEncoder fourni.
+    def lemmatize_text(text):
+        w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+        return ' '.join(word for word in [simplemma.lemmatize(w, lang='fr') for w in w_tokenizer.tokenize(text)])
+    w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+    lemmatizer = nltk.stem.WordNetLemmatizer()
+    Descr = pd.Series([titre + ", " + resume])
+    Descr = hero.clean(Descr, clean_pipeline)
+    Descr = Descr.apply(lemmatize_text)
+    
+    return Descr
 
-    Args:
-        sentence (str): La phrase prétraitée et lemmatisée.
-        model: Le modèle Omikuji chargé en mémoire.
-        vectorizer: Le vectoriseur TF-IDF pré-entraîné (scikit-learn).
-        le: Le LabelEncoder (scikit-learn) associant les indices aux libellés RAMEAU.
-        densify_threshold (float, optional): Seuil pour densifier les poids du modèle Omikuji. Par défaut 0.05.
 
-    Returns:
-        pd.DataFrame: DataFrame contenant les colonnes ['label', 'id', 'score'].
-    """
-    if not sentence:
-        return pd.DataFrame(columns=["label", "id", "score"])
-
-    # Densification optionnelle des poids du modèle pour optimiser la prédiction
-    model.densify_weights(densify_threshold)
-
-    # Transformation de la phrase en matrice sparse TF-IDF
-    feature_matrix = vectorizer.transform([sentence])
-
-    # Conversion des caractéristiques TF-IDF au format attendu par Omikuji (liste de [index, valeur])
-    feature_value_pairs = []
-    dense_features = feature_matrix.toarray()[0]
-    for idx, value in enumerate(dense_features):
-        if value > 0:
-            feature_value_pairs.append([idx, value])
-
-    # Prédiction Omikuji (retourne une liste de tuples (label_idx, score))
-    label_score_pairs = model.predict(feature_value_pairs)
-
+def predict_sentence(sentence,model,vectorizer,le):
+    # Charger le modèle
+    #model = omikuji.Model.load("./model_theses")
+   
+    model.densify_weights(0.05)
+    
+    # Transformer la phrase en vecteur
+    feature_value_pairs = vectorizer.transform([sentence])
+    
+    # Prédire
+    result = []
+    for x in feature_value_pairs.toarray():
+        for i in range(len(x)):
+            result.append([i, x[i]])
+    
+    # Obtenir les paires étiquette-score prédites
+    label_score_pairs = model.predict(result)
+    
     labels = []
     scores = []
-    for label_idx, score in label_score_pairs:
-        # Inverse transform du LabelEncoder
-        decoded_label = le.inverse_transform([label_idx])[0]
-        labels.append(decoded_label)
-        scores.append(score)
+    for pair in label_score_pairs:
+        labels.append(le.inverse_transform([pair[0]])[0])
+        scores.append(pair[1])
 
-    df = pd.DataFrame({"label": labels, "score": scores})
-
-    if df.empty:
-        return pd.DataFrame(columns=["label", "id", "score"])
-
-    # Extraction séparée du PPN et du libellé (format Label#PPN)
-    df["id"] = df["label"].astype(str).str.split("#").str[1]
-    df["label"] = df["label"].astype(str).str.split("#").str[0]
-
-    # Remplacement des underscores par des espaces dans les libellés
-    df["label"] = df["label"].str.replace("_", " ", regex=False)
-
-    return df[["label", "id", "score"]]
+    # Créer un DataFrame avec les colonnes "label" et "score"
+    df = pd.DataFrame({'label': labels, 'score': scores})
+    df['id'] = df['label'].str.split('#').str[1]
+    df['label'] = df['label'].str.split('#').str[0]
+    df = df[['label', 'id', 'score']]
+    df['label'] = df['label'].str.replace('_', ' ')
 
 
-def predict_omikuji(
-    titre: str,
-    resume: str,
-    model: Any,
-    vectorizer: Any,
-    le: Any,
-) -> pd.DataFrame:
-    """
-    Prédit les vedettes-matières RAMEAU pour un titre et un résumé donnés via Omikuji.
+    return df
 
-    Prétraite et lemmatise les textes d'entrée, puis fait appel au modèle Omikuji.
+def predict_omikuji(titre, resume, model, vectorizer, le):
+    # Vérifie si le résumé est présent
+    if resume:
+        DESCR = clean_and_lemmatize(titre, resume)
+    else:
+        DESCR = clean_and_lemmatize(titre, '')  # Si le résumé est absent, passe une chaîne vide
+    
+    valeur_specifique = DESCR[0]
+    chaine_de_caracteres = str(valeur_specifique)
+    result = predict_sentence(chaine_de_caracteres, model, vectorizer, le)
+    
+    return result
 
-    Args:
-        titre (str): Le titre du document.
-        resume (str): Le résumé du document.
-        model: Le modèle Omikuji chargé.
-        vectorizer: Le vectoriseur TF-IDF.
-        le: Le LabelEncoder pour décoder les indices.
 
-    Returns:
-        pd.DataFrame: DataFrame pandas contenant les propositions ['label', 'id', 'score'].
-    """
-    descr_series = clean_and_lemmatize(titre, resume)
-    cleaned_text = str(descr_series.iloc[0])
 
-    return predict_sentence(cleaned_text, model, vectorizer, le)

@@ -3,7 +3,6 @@
 # Web Framework & Server
 fastapi>=0.100.0
 uvicorn>=0.22.0
-python-multipart>=0.0.6
 
 # Machine Learning & Search Vectorielle
 sentence-transformers>=2.2.2
@@ -17,11 +16,10 @@ langdetect>=1.0.9
 simplemma>=0.4.0
 nltk>=3.8.0
 texthero==1.0.5
-
+openai>=1.0.0
 
 # Manipulation de données
 pandas>=2.0.0
 
 # Utilitaires & Configuration
 python-dotenv>=1.0.0
-requests>=2.31.0

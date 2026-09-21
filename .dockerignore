@@ -1,0 +1,33 @@
+# Exclusion des environnements virtuels et caches
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Exclusion des fichiers de configuration locale et secrets
+.env
+.env.*
+!.env-dist
+
+# Exclusion du code legacy du labo
+labo/
+
+# Exclusion du versionnement et des outils IDE
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+
+# Exclusion des tests et jeux de données de benchmark
+test/
+
+# Exclusion des logs locaux et fichiers de traces générés
+responses/
+history.txt
+*.log
+
+# Fichiers OS
+.DS_Store
+Thumbs.db

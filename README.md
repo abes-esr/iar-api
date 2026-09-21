@@ -41,7 +41,7 @@ Le serveur reçoit les requêtes en provenance d'IHM de catalogage (ex: **WinIBW
         └──────────────────────┼──────────────────────┘
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Recherche Vectorielle (Qdrant / FAISS)         │
+│              Recherche Vectorielle (Qdrant)                 │
 └──────────────────────────────┬──────────────────────────────┘
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -61,7 +61,7 @@ Le serveur reçoit les requêtes en provenance d'IHM de catalogage (ex: **WinIBW
 
 ## ✨ Fonctionnalités Principales
 
-1. **Recherche Vectorielle sémantique hybride :** Supporte aussi bien **Qdrant** (base de données vectorielle) que **FAISS** pour l'indexation ultra-rapide des concepts et chaînes d'autorités RAMEAU.
+1. **Recherche Vectorielle sémantique :** Utilise **Qdrant** (base de données vectorielle) pour l'indexation rapide des concepts et chaînes d'autorités RAMEAU.
 2. **Détection Automatique de Langue :** Si le titre ou le résumé n'est pas en français (`langdetect`), le serveur bascule automatiquement sur des modèles d'embedding multilingues (`victor3_chain_en`).
 3. **Agrégation Intelligente (Consensus & LLM) :** Combine les prédictions de plusieurs modèles par intersection, reranking par Cross-Encoder (`mmarco-mMiniLMv2-L12-H384-v1`), ou exclusion des intrus via un LLM (_Llama 3.1_).
 4. **Mise en forme Unimarc 606 automatisée :**
@@ -129,20 +129,36 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Lancement du serveur Uvicorn
+### 3. Configuration de l'environnement (`.env`)
+
+Copier le template `.env-dist` vers `.env` et renseigner les paramètres nécessaires :
+```bash
+cp .env-dist .env
+```
+
+### 4. Déploiement avec Docker & Docker Compose (Recommandé)
+
+Pour démarrer l'ensemble des services (API RAMEAU et instance vectorielle Qdrant) :
+```bash
+docker compose up -d --build
+```
+
+### 5. Lancement manuel du serveur Uvicorn (Développement local)
 
 ```bash
-python -m uvicorn rameau:app --host 0.0.0.0 --port 8071 --reload
+python -m uvicorn src.rameau:app --host 0.0.0.0 --port 8071 --reload
 ```
 
 L'interface de documentation interactive (Swagger UI) sera disponible sur : `http://localhost:8071/docs`.
+L'interface de test HTML sera accessible sur : `http://localhost:8071/rameau`.
 
 ---
 
 ## 📁 Structure du Projet & Modules `src/`
 
 - **`src/rameau.py`** : Point d'entrée principal du serveur Web FastAPI. Définit la route `/subject_indexation/` et orchestre les modèles d'embedding, les agrégations (consensus, cross-encoder, LLM) et la mise en forme Unimarc 606.
-- **`src/embed_lib.py`** : Module de recherche vectorielle. Fournit la chaîne de nettoyage linguistique native (`unicodedata`, `re`, `simplemma`, `nltk`) et les fonctions d'embedding `embedding_faiss` et `embedding_qdrant`.
+- **`src/config.py`** : Module de configuration centralisée chargeant et typant les variables depuis `.env`.
+- **`src/embed_lib.py`** : Module de recherche vectorielle Qdrant. Fournit la chaîne de nettoyage linguistique native (`simplemma`, `nltk`, `texthero`) et les fonctions d'embedding `embedding_qdrant`.
 - **`src/omk.py`** : Module de prédiction multi-label extrême. Intègre la classification `Omikuji` couplée au vectoriseur TF-IDF et décodage de vedettes RAMEAU.
 
 ---
