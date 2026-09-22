@@ -1,34 +1,17 @@
-# ==============================================================================
-# Workflow Réutilisable : Création de Release Python
-# ==============================================================================
-# Description : Ce workflow prépare et crée une version de release pour un projet Python (Poetry).
-#               - Vérifie que la branche courante est main ou master.
-#               - Vérifie que le format de version respecte SemVer.
-#               - Vérifie que le tag n'existe pas déjà.
-#               - Met à jour la version dans pyproject.toml (via Poetry) et README.md.
-#               - Commite, tag, pousse et fusionne sur la branche 'develop'.
-#               - Crée la release GitHub associée.
-#
-# Entrées (Inputs) :
-#   - versionType : Le type de mise à jour (major, minor, patch).
-#
-# Secrets requis :
-#   - TOKEN_GITHUB_FOR_GITHUB_ACTION : Token GitHub avec droits de push et de release.
-# ==============================================================================
-name: "Create release for Python"
+name: "Create release"
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       versionType:
-        description: "Quel type de version ? (major, minor, patch)"
+        description: "Quel type de version ?"
         required: true
-        type: string
         default: "patch"
-    secrets:
-      TOKEN_GITHUB_FOR_GITHUB_ACTION:
-        description: "Token GitHub avec privilèges d écriture pour tagger et release"
-        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 jobs:
   create-release:
