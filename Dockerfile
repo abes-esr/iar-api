@@ -33,7 +33,7 @@ RUN python -c "import nltk; nltk.download('wordnet', quiet=True); nltk.download(
 RUN (groupadd -g 999 docker 2>/dev/null || groupadd docker) && \
     useradd -u 1000 -m -s /bin/bash appuser && \
     usermod -aG docker appuser && \
-    mkdir -p /app/data /app/volumes /app/responses && \
+    mkdir -p /app/data/csv /app/volumes /app/responses && \
     chown -R appuser:appuser /app
 
 # ==============================================================================

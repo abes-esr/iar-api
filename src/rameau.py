@@ -40,45 +40,74 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-root=''
 
-cwd = str(Path.cwd())
-
-print("cwd",cwd)
-if "/app" in cwd :
-    root='/app/'
-
-adress_qdrant = os.getenv("QDRANT_HOST", "localhost")
-port_qdrant = int(os.getenv("QDRANT_PORT", 6333))
+adress_qdrant = os.getenv("IAR_QDRANT_HOST", os.getenv("QDRANT_HOST", "localhost"))
+port_qdrant = int(os.getenv("IAR_QDRANT_PORT", os.getenv("QDRANT_PORT", 6333)))
                 
 Qdrant_Client = QdrantClient(host=adress_qdrant, port=port_qdrant)
 
-#encoder1 = SentenceTransformer('all-MiniLM-L6-v2', device='cuda')
+# Initialisation des modèles d'embedding et de reranking
 encoder1 = SentenceTransformer('all-MiniLM-L6-v2')
-
-#encoder2=SentenceTransformer('distiluse-base-multilingual-cased-v2', device='cuda')
-encoder2=SentenceTransformer('distiluse-base-multilingual-cased-v2')
-
-#encoder3=SentenceTransformer('intfloat/multilingual-e5-large', device='cuda')
-encoder3=SentenceTransformer('intfloat/multilingual-e5-large')
-
-#encoder4 = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+encoder2 = SentenceTransformer('distiluse-base-multilingual-cased-v2')
+encoder3 = SentenceTransformer('intfloat/multilingual-e5-large')
 encoder4 = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
 
 
-# Dictionnaire des ancêtres de chaque Rameau (à recalculer)
-rameau_ancestors_df = pd.read_csv(root+"rameau_ancestors_df.csv")
-rameau_ancestors_df.set_index("ppn", inplace = True)
+def get_csv_dir() -> Path:
+    """
+    Localise le répertoire contenant les fichiers CSV de référence RAMEAU.
+    
+    Vérifie en priorité la variable d'environnement DATA_DIR, puis les chemins standards :
+    - Dans le conteneur Docker : /app/data/csv (issu du montage volume), puis /app/data
+    - En local : volumes/csv ou volumes à la racine du projet
+    
+    Returns:
+        Path: Le chemin résolu vers le répertoire contenant les fichiers CSV.
+    """
+    env_data_dir = os.getenv("DATA_DIR", "").strip()
+    candidates = []
+    
+    # 1. Vérification si DATA_DIR est défini (hors valeur par défaut '.')
+    if env_data_dir and env_data_dir != ".":
+        candidates.extend([Path(env_data_dir) / "csv", Path(env_data_dir)])
+        
+    # 2. Chemins standards selon l'environnement
+    if "/app" in str(Path.cwd()):
+        candidates.extend([Path("/app/data/csv"), Path("/app/data"), Path("/app")])
+    else:
+        base_dir = Path(__file__).resolve().parent.parent
+        candidates.extend([
+            base_dir / "volumes" / "csv",
+            base_dir / "volumes",
+            Path("volumes/csv"),
+            Path("volumes"),
+            Path(".")
+        ])
+        
+    for candidate in candidates:
+        if (candidate / "rameau_ancestors_df.csv").exists():
+            return candidate
+            
+    # Chemin par défaut si non trouvé
+    return Path("/app/data/csv") if "/app" in str(Path.cwd()) else Path("volumes/csv")
+
+
+csv_dir = get_csv_dir()
+print(f"[RAMEAU] Répertoire CSV utilisé : {csv_dir.resolve()}")
+
+# Dictionnaire des ancêtres de chaque Rameau
+rameau_ancestors_df = pd.read_csv(csv_dir / "rameau_ancestors_df.csv")
+rameau_ancestors_df.set_index("ppn", inplace=True)
 
 # Tableau à deux colonnes : un concept et son parent (un concept peut avoir plusieurs parents)
-rameau_parents = pd.read_csv(root+"rameau_parents.csv")
+rameau_parents = pd.read_csv(csv_dir / "rameau_parents.csv")
 rameau_parents_grouped = rameau_parents.groupby('PPN_LINKED')['PPN'].apply(list)
 rameau_parents_grouped = rameau_parents_grouped.reset_index()
-rameau_parents_grouped.set_index("PPN_LINKED", inplace = True)
+rameau_parents_grouped.set_index("PPN_LINKED", inplace=True)
 
 # Liste des concepts Rameau qu'on ne peut employer que comme subdivision
-subdivisionsONLY_df = pd.read_csv(root+"rameau_subdivisionsONLY.csv")
-subdivisionsONLY_list= list(subdivisionsONLY_df['PPN'])
+subdivisionsONLY_df = pd.read_csv(csv_dir / "rameau_subdivisionsONLY.csv")
+subdivisionsONLY_list = list(subdivisionsONLY_df['PPN'])
     
 #Prediction en utilsant les embedding
 def process_embedding_qdrant(Title, Summary, qdrant_client, encoder, collection, subjectsMaxCount):
@@ -99,9 +128,9 @@ print(sys.getsizeof(get_lang))
 
 #### LLM ###
 
-abes_llama3 = os.getenv('ABES_LLM_URL', 'https://llm.ilaas.fr/v1')
-key_abes_llama3 = os.getenv('ABES_LLM_KEY', 'ollama')
-abes_model = os.getenv('ABES_LLM_MODEL', 'llama-3.1-8b')
+abes_llama3 = os.getenv('IAR_LLM_URL', os.getenv('ABES_LLM_URL', 'http://iar-llm:11434/v1'))
+key_abes_llama3 = os.getenv('IAR_LLM_KEY', os.getenv('ABES_LLM_KEY', 'ollama'))
+abes_model = os.getenv('IAR_LLM_MODEL', os.getenv('ABES_LLM_MODEL', 'llama-3.1-8b'))
 
 # Créer une connexion à un LLM:
 client = OpenAI(

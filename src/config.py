@@ -29,30 +29,25 @@ class Settings:
     """
 
     # --- Configuration Qdrant ---
-    QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
-    QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", "6333"))
+    QDRANT_HOST: str = os.getenv("IAR_QDRANT_HOST", "localhost")
+    QDRANT_PORT: int = int(os.getenv("IAR_QDRANT_PORT", "6333"))
 
     # --- Configuration LLM ABES ---
-    ABES_LLM_URL: str = os.getenv("ABES_LLM_URL", "https://llm.ilaas.fr/v1").strip()
-    ABES_LLM_KEY: str = os.getenv("ABES_LLM_KEY", "").strip()
-    ABES_LLM_MODEL: str = os.getenv("ABES_LLM_MODEL", "llama-3.1-8b").strip()
-
-    # --- Configuration LLM DeepInfra (Optionnel / Secours) ---
-    DEEPINFRA_LLM_URL: str = os.getenv("DEEPINFRA_LLM_URL", "https://api.deepinfra.com/v1/openai").strip()
-    DEEPINFRA_LLM_KEY: str = os.getenv("DEEPINFRA_LLM_KEY", "").strip()
-    DEEPINFRA_LLM_MODEL: str = os.getenv("DEEPINFRA_LLM_MODEL", "meta-llama/Meta-Llama-3.1-70B-Instruct").strip()
+    ABES_LLM_URL: str = os.getenv("IAR_LLM_URL", "http://iar-llm:11434/v1").strip()
+    ABES_LLM_KEY: str = os.getenv("IAR_LLM_KEY", "").strip()
+    ABES_LLM_MODEL: str = os.getenv("IAR_LLM_MODEL", "llama-3.1-8b").strip()
 
     # --- Configuration Serveur FastAPI ---
-    API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
-    API_PORT: int = int(os.getenv("API_PORT", "8071"))
+    API_HOST: str = os.getenv("IAR_API_HTTP_HOST", "0.0.0.0")
+    API_PORT: int = int(os.getenv("IAR_API_HTTP_PORT", "8071"))
 
     # --- Sécurité & CORS ---
-    _raw_cors: str = os.getenv("CORS_ORIGINS", "*")
+    _raw_cors: str = os.getenv("IAR_CORS_ORIGINS", "*")
     CORS_ORIGINS: List[str] = [origin.strip() for origin in _raw_cors.split(",") if origin.strip()]
 
     # --- Répertoire des données et modèles ---
     # Par défaut dans un conteneur Docker : /app/data ou /app
-    DATA_DIR: str = os.getenv("DATA_DIR", "")
+    DATA_DIR: str = os.getenv("IAR_DATA_DIR", "")
     if not DATA_DIR:
         DATA_DIR = "/app/" if "/app" in str(Path.cwd()) else ""
 
