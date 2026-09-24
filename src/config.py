@@ -45,12 +45,6 @@ class Settings:
     _raw_cors: str = os.getenv("IAR_CORS_ORIGINS", "*")
     CORS_ORIGINS: List[str] = [origin.strip() for origin in _raw_cors.split(",") if origin.strip()]
 
-    # --- Répertoire des données et modèles ---
-    # Par défaut dans un conteneur Docker : /app/data ou /app
-    DATA_DIR: str = os.getenv("IAR_DATA_DIR", "")
-    if not DATA_DIR:
-        DATA_DIR = "/app/" if "/app" in str(Path.cwd()) else ""
-
     # --- Accélération matérielle (GPU) ---
     ENABLE_GPU: bool = os.getenv("ENABLE_GPU", "true").lower() in ("true", "1", "yes")
 

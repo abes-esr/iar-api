@@ -61,60 +61,27 @@ encoder3 = SentenceTransformer('intfloat/multilingual-e5-large', device=device)
 encoder4 = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", device=device)
 
 
-def get_csv_dir() -> Path:
-    """
-    Localise le répertoire contenant les fichiers CSV de référence RAMEAU.
-    
-    Vérifie en priorité la variable d'environnement DATA_DIR, puis les chemins standards :
-    - Dans le conteneur Docker : /app/data/csv (issu du montage volume), puis /app/data
-    - En local : volumes/csv ou volumes à la racine du projet
-    
-    Returns:
-        Path: Le chemin résolu vers le répertoire contenant les fichiers CSV.
-    """
-    env_data_dir = os.getenv("DATA_DIR", "").strip()
-    candidates = []
-    
-    # 1. Vérification si DATA_DIR est défini (hors valeur par défaut '.')
-    if env_data_dir and env_data_dir != ".":
-        candidates.extend([Path(env_data_dir) / "csv", Path(env_data_dir)])
-        
-    # 2. Chemins standards selon l'environnement
-    if "/app" in str(Path.cwd()):
-        candidates.extend([Path("/app/data/csv"), Path("/app/data"), Path("/app")])
-    else:
-        base_dir = Path(__file__).resolve().parent.parent
-        candidates.extend([
-            base_dir / "volumes" / "csv",
-            base_dir / "volumes",
-            Path("volumes/csv"),
-            Path("volumes"),
-            Path(".")
-        ])
-        
-    for candidate in candidates:
-        if (candidate / "rameau_ancestors_df.csv").exists():
-            return candidate
-            
-    # Chemin par défaut si non trouvé
-    return Path("/app/data/csv") if "/app" in str(Path.cwd()) else Path("volumes/csv")
+# Chemins d'accès exclusifs aux données (/app/data)
+DATA_DIR = Path("/app/data") if Path("/app/data").exists() else (Path(__file__).resolve().parent.parent / "volumes")
+CSV_DIR = DATA_DIR / "csv"
+HISTORY_DIR = DATA_DIR / "history"
+RESPONSES_DIR = DATA_DIR / "responses"
 
-
-csv_dir = get_csv_dir()
-print(f"[RAMEAU] Répertoire CSV utilisé : {csv_dir.resolve()}")
+print(f"[RAMEAU] Répertoire de données : {DATA_DIR.resolve()}")
+print(f"[RAMEAU] Répertoire CSV : {CSV_DIR.resolve()}")
 
 # Dictionnaire des ancêtres de chaque Rameau
-rameau_ancestors_df = pd.read_csv(csv_dir / "rameau_ancestors_df.csv")
+rameau_ancestors_df = pd.read_csv(CSV_DIR / "rameau_ancestors_df.csv")
 rameau_ancestors_df.set_index("ppn", inplace=True)
 
 # Tableau à deux colonnes : un concept et son parent (un concept peut avoir plusieurs parents)
-rameau_parents = pd.read_csv(csv_dir / "rameau_parents.csv")
+rameau_parents = pd.read_csv(CSV_DIR / "rameau_parents.csv")
 rameau_parents_grouped = rameau_parents.groupby('PPN_LINKED')['PPN'].apply(list)
 rameau_parents_grouped = rameau_parents_grouped.reset_index()
 rameau_parents_grouped.set_index("PPN_LINKED", inplace=True)
 
 # Liste des concepts Rameau qu'on ne peut employer que comme subdivision
-subdivisionsONLY_df = pd.read_csv(csv_dir / "rameau_subdivisionsONLY.csv")
+subdivisionsONLY_df = pd.read_csv(CSV_DIR / "rameau_subdivisionsONLY.csv")
 subdivisionsONLY_list = list(subdivisionsONLY_df['PPN'])
     
 #Prediction en utilsant les embedding
@@ -800,27 +767,28 @@ async def index_subjects(Title: str, Summary: str = None, docId: str = '', model
         response_data["PredictionByAggregation"] = aggregated_predictions
         print("response_data",response_data)
 
-    # fichier de traces
-    instant = datetime.datetime.now()                                
-    file_path = root+"history.txt";
-    with open(file_path, 'a') as file:
-        try :
-            file.write( "\n" + Agent + ";" + docId + ";" + Title.replace(";",",") + ";" + Summary.replace(";",",") + ";"+ str(instant))
-        except Exception as e :
-            print(e)
+    # Fichier de traces (stocké dans /app/data/history)
+    instant = datetime.datetime.now()
+    try:
+        os.makedirs(HISTORY_DIR, exist_ok=True)
+        file_path = HISTORY_DIR / "history.txt"
+        with open(file_path, 'a', encoding="utf-8") as file:
+            file.write("\n" + Agent + ";" + docId + ";" + Title.replace(";", ",") + ";" + Summary.replace(";", ",") + ";" + str(instant))
+    except Exception as e:
+        print(f"[RAMEAU] Erreur écriture history.txt : {e}")
 
-    #fichier de réponse json
-    instant_clean = str(instant).replace(":","-").replace(".","-").replace(" ","-")
-    os.makedirs(root+"responses", exist_ok=True)
-    if docId != "" :
-        file_path_response = root+"responses/"+docId + "_" + instant_clean+".json";
-    else :
-        file_path_response = root+"responses/"+instant_clean+".json";
-    with open(file_path_response, 'a') as file_response:
-        try :
-            file_response.write(json.dumps(response_data))
-        except Exception as e :
-            print(e)
+    # Fichier de réponse JSON (stocké dans /app/data/responses)
+    instant_clean = str(instant).replace(":", "-").replace(".", "-").replace(" ", "-")
+    try:
+        os.makedirs(RESPONSES_DIR, exist_ok=True)
+        if docId != "":
+            file_path_response = RESPONSES_DIR / f"{docId}_{instant_clean}.json"
+        else:
+            file_path_response = RESPONSES_DIR / f"{instant_clean}.json"
+        with open(file_path_response, 'a', encoding="utf-8") as file_response:
+            file_response.write(json.dumps(response_data, ensure_ascii=False))
+    except Exception as e:
+        print(f"[RAMEAU] Erreur écriture réponse JSON : {e}")
             
     page="""<!DOCTYPE html>
     <html>
