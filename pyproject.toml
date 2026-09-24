@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "iar-api"
+version = "0.0.0"
+description = "Service Web d'Indexation Sujet RAMEAU (API FastAPI)"
+authors = ["ABES"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
