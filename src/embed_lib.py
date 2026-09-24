@@ -25,15 +25,30 @@ def clean_and_lemmatize(titre, resume):
     return Descr
 
 def predict_qdrant(qdrant, encoder, text, collection, subjectsMaxCount):
-    hits = qdrant.search(
+    """
+    Exécute une recherche vectorielle dans la collection Qdrant spécifiée.
+    
+    Utilise l'API Query (query_points) de qdrant-client.
+    
+    Args:
+        qdrant: Client QdrantClient initialisé.
+        encoder: Modèle SentenceTransformer pour vectoriser le texte.
+        text (str): Texte nettoyé et lemmatisé à rechercher.
+        collection (str): Nom de la collection vectorielle dans Qdrant.
+        subjectsMaxCount (int): Nombre maximum de résultats retournés.
+        
+    Returns:
+        list[dict]: Liste de dictionnaires contenant le score de similarité et le payload.
+    """
+    response = qdrant.query_points(
         collection_name=collection,
-        query_vector=encoder.encode(text).tolist(),
+        query=encoder.encode(text).tolist(),
         limit=subjectsMaxCount
     )
     
     load_items = []
-    print("pour:"+ collection)
-    for hit in hits:
+    print("pour:" + collection)
+    for hit in response.points:
         load_items.append({'score': hit.score, 'label': hit.payload})
         print({'score': hit.score, 'label': hit.payload})
 
