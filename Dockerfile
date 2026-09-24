@@ -22,8 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copie et installation des dépendances Python
+# Installation préalable de PyTorch compatible CUDA 12.6 pour le support natif de la Tesla V100 (Compute Capability 7.0)
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu126 \
     && pip install --no-cache-dir -r requirements.txt
 
 # Pré-téléchargement des ressources linguistiques NLTK requises par embed_lib

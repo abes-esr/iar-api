@@ -51,5 +51,8 @@ class Settings:
     if not DATA_DIR:
         DATA_DIR = "/app/" if "/app" in str(Path.cwd()) else ""
 
+    # --- Accélération matérielle (GPU) ---
+    ENABLE_GPU: bool = os.getenv("ENABLE_GPU", "true").lower() in ("true", "1", "yes")
+
 
 settings = Settings()

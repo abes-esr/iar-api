@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import numpy as np
 import json           
+import torch
 from embed_lib import *
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer, CrossEncoder
@@ -46,11 +47,18 @@ port_qdrant = int(os.getenv("IAR_QDRANT_PORT", os.getenv("QDRANT_PORT", 6333)))
                 
 Qdrant_Client = QdrantClient(host=adress_qdrant, port=port_qdrant)
 
-# Initialisation des modèles d'embedding et de reranking
-encoder1 = SentenceTransformer('all-MiniLM-L6-v2')
-encoder2 = SentenceTransformer('distiluse-base-multilingual-cased-v2')
-encoder3 = SentenceTransformer('intfloat/multilingual-e5-large')
-encoder4 = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+# Configuration du périphérique d'inférence (GPU NVIDIA CUDA prioritaire)
+enable_gpu = os.getenv("ENABLE_GPU", "true").lower() in ("true", "1", "yes")
+device = "cuda" if (enable_gpu and torch.cuda.is_available()) else "cpu"
+print(f"[RAMEAU] Périphérique d'inférence sélectionné : {device.upper()}")
+if device == "cuda":
+    print(f"[RAMEAU] GPU actif : {torch.cuda.get_device_name(0)} (VRAM totale : {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} Go)")
+
+# Initialisation des modèles d'embedding et de reranking sur le périphérique configuré
+encoder1 = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+encoder2 = SentenceTransformer('distiluse-base-multilingual-cased-v2', device=device)
+encoder3 = SentenceTransformer('intfloat/multilingual-e5-large', device=device)
+encoder4 = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", device=device)
 
 
 def get_csv_dir() -> Path:
