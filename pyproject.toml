@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "iar-api"
-version = "0.0.0"
+version = "0.0.2-SNAPSHOT"
 description = "Service Web d'Indexation Sujet RAMEAU (API FastAPI)"
 authors = ["ABES"]
 readme = "README.md"
