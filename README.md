@@ -3,6 +3,8 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/iar.svg)](https://hub.docker.com/r/abesesr/iar/)
 [![Buildx Publish](https://github.com/abes-esr/iar-api/actions/workflows/buildx-pubtodockerhub.yml/badge.svg)](https://github.com/abes-esr/iar-api/actions/workflows/buildx-pubtodockerhub.yml)
 
+> 📌 **Rôle central du dépôt `iar-docker`** : Le dépôt [**iar-docker**](https://github.com/abes-esr/iar-docker) centralise l'état et le stockage de tous les services de la plateforme. En cas d'incident majeur ou de réinstallation complète d'un serveur, la restauration est opérée depuis ce dossier.
+
 ---
 
 ## 📌 Sommaire
@@ -15,8 +17,7 @@
 - [6. Diagramme d'architecture](#6-diagramme-darchitecture)
 - [7. Procédure de déploiement / d'installation](#7-procédure-de-déploiement--dinstallation)
 - [8. Procédure de supervision](#8-procédure-de-supervision)
-- [9. Procédure de restauration](#9-procédure-de-restauration)
-- [10. Procédure de testing](#10-procédure-de-testing)
+- [9. Procédure de testing](#9-procédure-de-testing)
 
 ---
 
@@ -283,57 +284,16 @@ Les métriques systèmes et applicatives sont agrégées sur les serveurs Grafan
 - `http://diplotaxis7-test.v202.abes.fr:3000`
 - `http://diplotaxis7-prod.v102.abes.fr:3000`
 
----
+### 5. Tableaux de bord de la base vectorielle Qdrant
 
-## 9. Procédure de restauration
+L'état des collections vectorielles et des index de points peut être vérifié sur :
 
-En cas d'incident sur l'infrastructure ou de réinstallation sur un nouveau serveur (`donut-test` ou `donut-prod`), la procédure de restauration s'applique à l'environnement [**iar-docker**](https://github.com/abes-esr/iar-docker) (`/opt/pod/iar-docker/`), seul dossier présent sur les serveurs hôtes.
-
-### Étape 1 : Récupération globale via `rsync`
-
-Les sauvegardes automatiques de l'ABES effectuant une sauvegarde globale de l'ensemble du serveur sur les machines de stockage dédiées (`socorro.abes.fr` / `sotora.abes.fr`), une unique commande `rsync` permet de restaurer rapidement l'intégralité du répertoire de déploiement `iar-docker` (incluant le fichier `.env`, les volumes de référentiels `volumes/csv/` et les configurations) :
-
-```bash
-# Restauration globale du répertoire iar-docker (adapter le serveur source : donut-test ou donut-prod)
-rsync -avzP socorro.abes.fr:/backup/donut-prod/opt/pod/iar-docker/ /opt/pod/iar-docker/
-```
-
-### Étape 2 : Restauration des collections vectorielles Qdrant
-
-Si la base Qdrant doit être réinitialisée, injecter les snapshots via l'API REST de Qdrant :
-
-```bash
-# Restauration de la collection principale des concepts
-curl -X PUT -F "snapshot=@/opt/pod/iar-docker/volumes/qdrant/snapshots/concepts_allMin_only_mono.snapshot" \
-  "http://localhost:6333/collections/concepts_allMin_only_mono/snapshots/upload"
-
-# Restauration de la collection multilingue
-curl -X PUT -F "snapshot=@/opt/pod/iar-docker/volumes/qdrant/snapshots/concepts_e5-large_only_mono.snapshot" \
-  "http://localhost:6333/collections/concepts_e5-large_only_mono/snapshots/upload"
-```
-
-Les collections restaurées sont consultables immédiatement sur le tableau de bord Qdrant :
-
-- **Local** : `http://localhost:6333/dashboard#/collections`
 - **Test** : `http://donut-test.abes.fr:6333/dashboard#/collections`
 - **Production** : `http://donut-prod.abes.fr:6333/dashboard#/collections`
 
-### Étape 3 : Redémarrage et vérification
-
-```bash
-# Se placer dans le répertoire d'exploitation
-cd /opt/pod/iar-docker/
-
-# Démarrer l'ensemble des conteneurs
-docker compose up -d
-
-# Valider le bon démarrage
-curl -f http://localhost:8071/health
-```
-
 ---
 
-## 10. Procédure de testing
+## 9. Procédure de testing
 
 La suite de tests et de validation s'articule autour du répertoire [`test/`](./test/) :
 
