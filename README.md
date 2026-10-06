@@ -3,7 +3,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/iar.svg)](https://hub.docker.com/r/abesesr/iar/)
 [![Buildx Publish](https://github.com/abes-esr/iar-api/actions/workflows/buildx-pubtodockerhub.yml/badge.svg)](https://github.com/abes-esr/iar-api/actions/workflows/buildx-pubtodockerhub.yml)
 
-> 📌 **Rôle central du dépôt `iar-docker`** : Le dépôt [**iar-docker**](https://github.com/abes-esr/iar-docker) centralise l'état et le stockage de tous les services de la plateforme. En cas d'incident majeur ou de réinstallation complète d'un serveur, la restauration est opérée depuis ce dossier.
+> 📌 **Rôle central du dépôt `iar-docker`** : Le dépôt [**iar-docker**](https://github.com/abes-esr/iar-docker) centralise l'état et le stockage de tous les services de la plateforme. En cas d'incident majeur ou de réinstallation complète d'un serveur, la restauration est opérée depuis ce dossier. Pour la restauration de l'application, veuillez vous référer à sa documentation : [iar-docker - Procédure de restauration globale](https://github.com/abes-esr/iar-docker#8-procédure-de-restauration-globale).
 
 ---
 
