@@ -34,7 +34,7 @@ Le projet IAR est composé de plusieurs modules interdépendants hébergés sur 
 
 | Dépôt GitHub                                                           | Rôle & Description                                                                                                                |
 | :--------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-| [**iar-docker**](https://github.com/abes-esr/iar-docker)               | Configuration Docker Compose pour le déploiement complet des conteneurs de la plateforme (API, Qdrant, Ollama/vLLM, Dozzle).      |
+| [**iar-docker**](https://github.com/abes-esr/iar-docker)               | Configuration Docker Compose pour le déploiement complet des conteneurs de la plateforme (API, Qdrant, Ollama/vLLM).      |
 | [**iar-api**](https://github.com/abes-esr/iar-api)                     | Ce dépôt : API FastAPI exposant le service de suggestion d'indexation sujet.                                                      |
 | [**iar-vectorisation**](https://github.com/abes-esr/iar-vectorisation) | Scripts de génération des vecteurs d'embeddings RAMEAU et de peuplement des collections Qdrant.                                   |
 | [**iar-batch-docker**](https://github.com/abes-esr/iar-batch-docker)   | Déploiement Docker pour les traitements par lots et les interfaces de mise à jour des données.                                    |
